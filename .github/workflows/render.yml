@@ -11,15 +11,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
+
       - name: Install dependencies
         run: npm install
+
       - name: Render MP4 with Remotion
         run: npx remotion render src/index.tsx Reel out/reel.mp4 --codec=h264
+
       - name: Upload MP4
         uses: actions/upload-artifact@v4
         with:
