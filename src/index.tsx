@@ -1,14 +1,8 @@
-import {Composition} from 'remotion';
+import {Composition, registerRoot} from 'remotion';
 import {Reel} from './Reel';
 
-export const RemotionRoot = () => (
-  <Composition
-    id="Reel"
-    component={Reel}
-    durationInFrames={750}
-    fps={30}
-    width={1080}
-    height={1920}
-    defaultProps={{accent: '#EDAB18'}}
-  />
+const RemotionRoot = () => (
+  <Composition id="Reel" component={Reel} durationInFrames={750} fps={30} width={1080} height={1920} defaultProps={{accent:'#EDAB18'}} />
 );
+
+registerRoot(RemotionRoot);
