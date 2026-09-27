@@ -1,0 +1,10 @@
+{
+  "version": "1.0",
+  "format": {"width": 1080, "height": 1920, "fps": 30},
+  "script": "Most businesses do not have a content problem. They have a distribution problem.",
+  "scenes": [
+    {"id":"s01","type":"kineticText","start":0,"duration":75,"text":"MOST BUSINESSES","emphasis":["MOST BUSINESSES"],"visual":"Large editorial entrance."},
+    {"id":"s02","type":"editorialCard","start":75,"duration":45,"text":"do not have a content problem.","emphasis":["CONTENT PROBLEM"],"visual":"Editorial card that contracts before the next beat."},
+    {"id":"s03","type":"wordReveal","start":120,"duration":75,"text":"THEY HAVE A DISTRIBUTION PROBLEM","emphasis":["DISTRIBUTION PROBLEM"],"visual":"Final phrase isolates the key concept."}
+  ]
+}
