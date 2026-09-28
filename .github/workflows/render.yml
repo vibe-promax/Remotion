@@ -15,12 +15,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
       - name: Install dependencies
         run: npm install
-      - name: Render colorful 3D reel
-        run: npx remotion render src/index.tsx Creator3DReel out/creator-3d-reel.mp4 --codec=h264
+      - name: Render Creator Audience editorial reel
+        run: npx remotion render src/index.tsx CreatorAudienceReel out/creator-audience-editorial.mp4 --codec=h264 --pixel-format=yuv420p
       - name: Upload MP4
         uses: actions/upload-artifact@v4
         with:
-          name: creator-3d-reel
-          path: out/creator-3d-reel.mp4
+          name: creator-audience-editorial
+          path: out/creator-audience-editorial.mp4
