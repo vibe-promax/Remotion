@@ -1,46 +1,187 @@
 import React from 'react';
 import {AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig, spring} from 'remotion';
 
-const BG='#060C1C'; const GOLD='#EDAB18'; const WHITE='#F7F7F2';
+const BG = '#F7F7F4';
+const INK = '#151515';
+const MUTED = '#77736D';
+const RED = '#E63B32';
+const BLUE = '#4778D8';
+const LIME = '#C7E84B';
+const CARD = '#FFFFFF';
 
-const Noise=()=> <AbsoluteFill style={{opacity:.08,pointerEvents:'none'}}><svg width='100%' height='100%'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(#n)' opacity='.35'/></svg></AbsoluteFill>;
-const Grid=()=> <AbsoluteFill style={{opacity:.08,backgroundImage:'linear-gradient(rgba(247,247,242,.15) 1px,transparent 1px),linear-gradient(90deg,rgba(247,247,242,.15) 1px,transparent 1px)',backgroundSize:'72px 72px',maskImage:'linear-gradient(to bottom,black,transparent 80%)'}}/>;
+const ease = {extrapolateLeft: 'clamp' as const, extrapolateRight: 'clamp' as const};
 
-const Word=({children,accent=false,size=100}:{children:React.ReactNode;accent?:boolean;size?:number})=> <span style={{display:'inline-block',color:accent?GOLD:WHITE,fontSize:size,fontWeight:950,letterSpacing:-4}}>{children}</span>;
+const fade = (f: number, start: number, end: number, inFrames = 10, outFrames = 10) =>
+  interpolate(f, [start, start + inFrames, end - outFrames, end], [0, 1, 1, 0], ease);
 
-const Scene=({start,end,children}:{start:number;end:number;children:React.ReactNode})=>{
- const f=useCurrentFrame(); const local=f-start; const len=end-start;
- const opacity=interpolate(local,[0,10,len-10,len],[0,1,1,0],{extrapolateLeft:'clamp',extrapolateRight:'clamp'});
- const y=interpolate(local,[0,12],[34,0],{extrapolateLeft:'clamp',extrapolateRight:'clamp'});
- return <AbsoluteFill style={{opacity,transform:`translateY(${y}px)`}}>{children}</AbsoluteFill>;
+const rise = (f: number, start: number, distance = 42, duration = 18) =>
+  interpolate(f, [start, start + duration], [distance, 0], ease);
+
+const ScaleIn = ({f, start, children, from = 0.88}: {f: number; start: number; children: React.ReactNode; from?: number}) => {
+  const s = interpolate(f, [start, start + 18], [from, 1], ease);
+  const o = interpolate(f, [start, start + 12], [0, 1], ease);
+  return <div style={{opacity: o, transform: `scale(${s})`}}>{children}</div>;
 };
 
-const Network=({p}:{p:number})=>{
- const pts=[['18%','28%'],['48%','18%'],['78%','30%'],['28%','65%'],['62%','72%'],['84%','60%']];
- return <AbsoluteFill>{pts.map(([x,y],i)=><React.Fragment key={i}><div style={{position:'absolute',left:x,top:y,width:26,height:26,borderRadius:'50%',background:i===1||i===4?GOLD:WHITE,opacity:.9,transform:`scale(${.5+p*.5})`,boxShadow:`0 0 35px ${i===1||i===4?'rgba(237,171,24,.45)':'rgba(247,247,242,.2)'}`}}/></React.Fragment>)}
- <svg width='100%' height='100%' style={{position:'absolute',inset:0,opacity:.24}}><line x1='18%' y1='28%' x2='48%' y2='18%' stroke='white'/><line x1='48%' y1='18%' x2='78%' y2='30%' stroke='white'/><line x1='18%' y1='28%' x2='28%' y2='65%' stroke='white'/><line x1='28%' y1='65%' x2='62%' y2='72%' stroke='white'/><line x1='62%' y1='72%' x2='84%' y2='60%' stroke='white'/><line x1='78%' y1='30%' x2='84%' y2='60%' stroke='white'/></svg></AbsoluteFill>;
+const Serif = ({children, size = 92, italic = true, color = INK, weight = 500, style = {}}: any) => (
+  <span style={{
+    fontFamily: 'Georgia, Times New Roman, serif', fontSize: size, lineHeight: 0.9,
+    fontStyle: italic ? 'italic' : 'normal', fontWeight: weight, color, letterSpacing: -3,
+    ...style,
+  }}>{children}</span>
+);
+
+const Sans = ({children, size = 22, color = INK, weight = 700, style = {}}: any) => (
+  <span style={{fontFamily: 'Arial, Helvetica, sans-serif', fontSize: size, color, fontWeight: weight, ...style}}>{children}</span>
+);
+
+const Angular = ({rotate = 0, x = 0, y = 0, scale = 1, opacity = 0.7}: {rotate?: number; x?: number; y?: number; scale?: number; opacity?: number}) => (
+  <div style={{position: 'absolute', left: x, top: y, width: 250, height: 92, opacity, transform: `rotate(${rotate}deg) scale(${scale})`, transformOrigin: 'center'}}>
+    <div style={{position: 'absolute', inset: 0, clipPath: 'polygon(0 0, 28% 0, 50% 50%, 72% 0, 100% 0, 66% 100%, 34% 100%)', background: 'rgba(190,190,185,.18)', border: '1px solid rgba(30,30,30,.08)'}} />
+  </div>
+);
+
+const Faceted = ({size = 180, x = 760, y = 150, rotate = 0, color = INK, opacity = 1}: any) => {
+  const points = '50,0 86,16 100,50 86,84 50,100 14,84 0,50 14,16';
+  return <svg style={{position: 'absolute', left: x, top: y, width: size, height: size, transform: `rotate(${rotate}deg)`, opacity, filter: 'drop-shadow(0 18px 20px rgba(0,0,0,.16))'}} viewBox="0 0 100 100">
+    <polygon points={points} fill={color}/>
+    <polygon points="50,0 86,16 50,50" fill="rgba(255,255,255,.18)"/>
+    <polygon points="86,16 100,50 50,50" fill="rgba(255,255,255,.07)"/>
+    <polygon points="50,50 100,50 86,84" fill="rgba(0,0,0,.14)"/>
+    <polygon points="50,50 86,84 50,100" fill="rgba(0,0,0,.22)"/>
+  </svg>;
 };
 
-export const CreatorAudienceReel:React.FC=()=>{
- const frame=useCurrentFrame(); const {fps}=useVideoConfig();
- const scene=frame<90?0:frame<210?1:frame<330?2:frame<450?3:frame<600?4:5;
- const local=scene===0?frame:scene===1?frame-90:scene===2?frame-210:scene===3?frame-330:scene===4?frame-450:frame-600;
- const p=spring({frame:Math.max(0,local),fps,config:{damping:18,stiffness:90}});
- return <AbsoluteFill style={{background:BG,color:WHITE,fontFamily:'Roboto,Arial,sans-serif',overflow:'hidden'}}><Grid/><Noise/>
- <div style={{position:'absolute',left:64,right:64,top:54,display:'flex',justifyContent:'space-between',fontSize:17,fontWeight:800,letterSpacing:3,zIndex:5}}><span style={{color:GOLD}}>SAAFI SMART</span><span style={{opacity:.38}}>CREATOR ECONOMY</span></div>
+const PhotoCard = ({x, y, w, h, color, label, rotate = 0}: any) => (
+  <div style={{position: 'absolute', left: x, top: y, width: w, height: h, borderRadius: 34, background: color, transform: `rotate(${rotate}deg)`, boxShadow: '0 22px 42px rgba(0,0,0,.15)', overflow: 'hidden', border: '1px solid rgba(0,0,0,.06)'}}>
+    <div style={{position: 'absolute', inset: 0, background: 'linear-gradient(145deg, rgba(255,255,255,.32), transparent 45%, rgba(0,0,0,.08))'}} />
+    <div style={{position: 'absolute', left: 24, bottom: 22}}><Sans size={18} color="rgba(255,255,255,.82)" weight={800}>{label}</Sans></div>
+  </div>
+);
 
- {scene===0&&<Scene start={0} end={90}><div style={{position:'absolute',left:68,right:68,top:510}}><div style={{fontSize:22,color:GOLD,fontWeight:800,letterSpacing:5}}>THE CREATOR ADVANTAGE</div><div style={{marginTop:24,lineHeight:.9}}><Word size={116}>AUDIENCE</Word><br/><Word accent size={116}>IS ASSET.</Word></div><div style={{marginTop:34,fontSize:29,opacity:.6}}>A trusted audience gives a creator something<br/>a new company may spend years building.</div></div></Scene>}
+const NodeNetwork = ({f, start}: {f: number; start: number}) => {
+  const p = spring({frame: Math.max(0, f - start), fps: 30, config: {damping: 16, stiffness: 70}});
+  const nodes = [[130,240],[380,160],[650,250],[250,470],[530,500],[820,410]];
+  return <AbsoluteFill style={{opacity: p}}>
+    <svg width="100%" height="100%" style={{position: 'absolute', inset: 0}}>
+      {[[0,1],[1,2],[0,3],[3,4],[4,2],[2,5],[4,5]].map(([a,b],i)=><line key={i} x1={nodes[a][0]} y1={nodes[a][1]} x2={nodes[b][0]} y2={nodes[b][1]} stroke="#222" strokeOpacity=".16" strokeWidth="3" />)}
+    </svg>
+    {nodes.map(([x,y],i)=><div key={i} style={{position: 'absolute', left:x-20, top:y-20, width:40, height:40, borderRadius:'50%', background:i===1||i===4?RED:CARD, border:`3px solid ${i===1||i===4?RED:INK}`, boxShadow:'0 8px 18px rgba(0,0,0,.12)', transform:`scale(${.65+p*.35})`}} />)}
+  </AbsoluteFill>;
+};
 
- {scene===1&&<Scene start={90} end={210}><div style={{position:'absolute',left:68,top:390,fontSize:20,color:GOLD,fontWeight:800,letterSpacing:5}}>WHAT THEY REALLY OWN</div><div style={{position:'absolute',left:68,top:485,lineHeight:.92}}><Word size={104}>ATTENTION</Word><br/><span style={{fontSize:74,fontWeight:900,opacity:.35}}>+</span><br/><Word accent size={116}>TRUST.</Word></div><Network p={p}/></Scene>}
+export const CreatorAudienceReel: React.FC = () => {
+  const f = useCurrentFrame();
+  const {fps} = useVideoConfig();
+  const duration = 27 * fps;
 
- {scene===2&&<Scene start={210} end={330}><div style={{position:'absolute',left:68,right:68,top:360}}><div style={{fontSize:21,color:GOLD,fontWeight:800,letterSpacing:5}}>THE OLD PATH</div><div style={{fontSize:66,fontWeight:900,lineHeight:1.02,marginTop:24}}>A NEW COMPANY<br/>CAN TAKE <span style={{color:GOLD}}>YEARS</span><br/>TO BUILD AN AUDIENCE.</div></div><div style={{position:'absolute',left:70,right:70,bottom:220,height:5,background:'rgba(247,247,242,.15)'}}><div style={{height:'100%',width:`${p*78}%`,background:GOLD}}/></div><div style={{position:'absolute',left:70,bottom:165,fontSize:18,opacity:.42,letterSpacing:3}}>TIME → AWARENESS → TRUST</div></Scene>}
+  return <AbsoluteFill style={{background: BG, color: INK, overflow: 'hidden'}}>
+    <Angular x={-35} y={130} rotate={-10} opacity={0.8}/>
+    <Angular x={690} y={430} rotate={18} scale={1.15}/>
+    <Angular x={-55} y={1260} rotate={-14} scale={1.3}/>
+    <Faceted x={800} y={75} size={170} rotate={18} opacity={.95}/>
+    <Faceted x={-72} y={1490} size={190} rotate={-12} opacity={.82}/>
 
- {scene===3&&<Scene start={330} end={450}><div style={{position:'absolute',left:68,right:68,top:390}}><div style={{fontSize:21,color:GOLD,fontWeight:800,letterSpacing:5}}>THE CREATOR ALREADY HAS IT</div><div style={{fontSize:104,fontWeight:950,lineHeight:.9,marginTop:28}}>THE<br/><span style={{color:GOLD}}>AUDIENCE.</span></div><div style={{marginTop:34,fontSize:31,opacity:.6}}>That changes the starting point.</div></div><div style={{position:'absolute',right:76,bottom:200,width:210,height:300,border:'1px solid rgba(247,247,242,.2)',borderRadius:30,transform:`rotate(${(1-p)*8-3}deg) scale(${.88+p*.12})`,background:'linear-gradient(150deg,rgba(237,171,24,.22),rgba(247,247,242,.03))'}}><div style={{padding:22,fontSize:16,letterSpacing:2,opacity:.5}}>CREATOR</div><div style={{position:'absolute',left:22,bottom:62,fontSize:22,fontWeight:800}}>100K+<br/><span style={{fontSize:14,opacity:.45}}>TRUSTED REACH</span></div></div></Scene>}
+    {/* 0:00–0:02 */}
+    {f < 60 && <AbsoluteFill style={{opacity: fade(f,0,60)}}>
+      <div style={{position:'absolute', left:72, top:300}}>
+        <Sans size={21} color={MUTED} weight={700} style={{letterSpacing:4}}>SIDAAS OO KALE</Sans>
+        <div style={{marginTop:34}}><Serif size={118}>Creator</Serif></div>
+        <div style={{marginTop:6}}><Serif size={118} color={RED}>le</Serif> <Serif size={118}>audience</Serif></div>
+        <div style={{marginTop:34}}><Sans size={27} color={MUTED} weight={500}>ku kalsoon wuxuu haystaa wax aad u qiimo badan.</Sans></div>
+      </div>
+    </AbsoluteFill>}
 
- {scene===4&&<Scene start={450} end={600}><div style={{position:'absolute',left:68,right:68,top:350}}><div style={{fontSize:20,color:GOLD,fontWeight:800,letterSpacing:5}}>WHAT CAN THAT BECOME?</div><div style={{marginTop:32,display:'flex',flexDirection:'column',gap:18}}>{['PRODUCT','SERVICE','PERSONAL BRAND'].map((x,i)=><div key={x} style={{fontSize:62,fontWeight:900,padding:'18px 24px',border:'1px solid rgba(247,247,242,.12)',borderRadius:18,transform:`translateX(${(1-interpolate(local,[i*12,i*12+16],[0,1],{extrapolateLeft:'clamp',extrapolateRight:'clamp'}))*70}px)`,opacity:interpolate(local,[i*12,i*12+16],[0,1],{extrapolateLeft:'clamp',extrapolateRight:'clamp'})}}>{x}<span style={{float:'right',color:GOLD}}>→</span></div>)}</div></div></Scene>}
+    {/* 0:02–0:08 Attention + Trust */}
+    {f >= 60 && f < 240 && <AbsoluteFill style={{opacity: fade(f,60,240)}}>
+      <div style={{position:'absolute', left:72, top:270}}>
+        <Sans size={20} color={MUTED} weight={800} style={{letterSpacing:4}}>THE REAL ASSET</Sans>
+        <div style={{marginTop:28}}><Serif size={128}>Attention</Serif></div>
+        <div style={{marginTop:-6}}><Serif size={82} color={RED}>+</Serif></div>
+        <div style={{marginTop:-4}}><Serif size={128}>Trust.</Serif></div>
+      </div>
+      <NodeNetwork f={f} start={80}/>
+      <div style={{position:'absolute', left:74, bottom:245, width:850, height:2, background:'rgba(20,20,20,.12)'}} />
+      <div style={{position:'absolute', left:74, bottom:208}}><Sans size={20} color={MUTED} weight={700}>AUDIENCE = ATTENTION × TRUST</Sans></div>
+      <Faceted x={735} y={1180} size={150} rotate={-8} color={RED} opacity={.9}/>
+    </AbsoluteFill>}
 
- {scene===5&&<Scene start={600} end={750}><div style={{position:'absolute',left:68,right:68,top:390}}><div style={{fontSize:21,color:GOLD,fontWeight:800,letterSpacing:5}}>THE BUSINESS IDEA</div><div style={{fontSize:72,fontWeight:950,lineHeight:1.02,marginTop:26}}>FOLLOWERS<br/><span style={{opacity:.35}}>ARE NOT THE POINT.</span></div><div style={{fontSize:45,fontWeight:900,lineHeight:1.05,marginTop:30}}>AUDIENCE = <span style={{color:GOLD}}>BUSINESS ASSET</span></div><div style={{marginTop:38,fontSize:25,opacity:.58,maxWidth:800}}>When attention and trust are used well, an audience can become the foundation for something much bigger.</div></div><div style={{position:'absolute',left:68,right:68,bottom:62,display:'flex',justifyContent:'space-between',fontSize:16,letterSpacing:2,opacity:.35}}><span>CREATOR ECONOMY • STRATEGY</span><span>@SAAFI SMART</span></div></Scene>}
+    {/* 0:08–0:13 New company takes years */}
+    {f >= 240 && f < 390 && <AbsoluteFill style={{opacity: fade(f,240,390)}}>
+      <div style={{position:'absolute', left:72, top:310}}>
+        <Sans size={20} color={MUTED} weight={800} style={{letterSpacing:4}}>THE OLD PATH</Sans>
+        <div style={{marginTop:28}}><Serif size={105}>Shirkad cusub</Serif></div>
+        <div style={{marginTop:12}}><Serif size={105}>waxay qaadan kartaa</Serif></div>
+        <div style={{marginTop:18}}><Serif size={132} color={RED}>sannado.</Serif></div>
+      </div>
+      <div style={{position:'absolute', left:72, right:72, bottom:360, height:5, background:'rgba(20,20,20,.12)', borderRadius:5}}>
+        <div style={{height:'100%', width:`${interpolate(f,[240,340],[4,92],ease)}%`, background:INK, borderRadius:5}} />
+      </div>
+      <div style={{position:'absolute', left:72, bottom:315, display:'flex', justifyContent:'space-between', width:870}}>
+        <Sans size={19} color={MUTED}>AWARENESS</Sans><Sans size={19} color={MUTED}>AUDIENCE</Sans><Sans size={19} color={MUTED}>TRUST</Sans>
+      </div>
+      <Faceted x={-55} y={1160} size={180} rotate={12} color={BLUE} opacity={.82}/>
+    </AbsoluteFill>}
 
- <div style={{position:'absolute',left:68,right:68,bottom:62,display:'flex',justifyContent:'space-between',fontSize:15,letterSpacing:2,opacity:.25}}><span>ATTENTION × TRUST</span><span>{String(Math.floor(frame/fps)).padStart(2,'0')}s</span></div>
- </AbsoluteFill>;
+    {/* 0:13–0:15 Creator already has it */}
+    {f >= 390 && f < 450 && <AbsoluteFill style={{opacity: fade(f,390,450)}}>
+      <div style={{position:'absolute', left:72, top:340}}>
+        <Sans size={20} color={MUTED} weight={800} style={{letterSpacing:4}}>THE CREATOR ALREADY HAS IT</Sans>
+        <div style={{marginTop:30}}><Serif size={128}>Hore ayuu</Serif></div>
+        <div style={{marginTop:8}}><Serif size={138} color={BLUE}>u haystaa.</Serif></div>
+      </div>
+      <PhotoCard x={670} y={1030} w={300} h={390} color={BLUE} label="TRUSTED AUDIENCE" rotate={-6}/>
+      <Faceted x={790} y={140} size={130} rotate={28} color={LIME} opacity={.9}/>
+    </AbsoluteFill>}
+
+    {/* 0:15–0:21 Product / service / brand */}
+    {f >= 450 && f < 630 && <AbsoluteFill style={{opacity: fade(f,450,630)}}>
+      <div style={{position:'absolute', left:72, top:260}}>
+        <Sans size={20} color={MUTED} weight={800} style={{letterSpacing:4}}>WHAT IT CAN BECOME</Sans>
+        <div style={{marginTop:30}}><Serif size={104}>Product.</Serif></div>
+        <div style={{marginTop:10}}><Serif size={104} color={RED}>Service.</Serif></div>
+        <div style={{marginTop:10}}><Serif size={104}>Brand.</Serif></div>
+      </div>
+      <div style={{position:'absolute', right:74, top:1040, width:350, height:390, borderRadius:38, background:CARD, boxShadow:'0 22px 50px rgba(0,0,0,.15)', border:'1px solid rgba(0,0,0,.07)', transform:`rotate(${interpolate(f,[450,520],[7,2],ease)}deg)`}}>
+        <div style={{position:'absolute', inset:24, borderRadius:26, background:'linear-gradient(145deg,#f1f1ee,#d7d7d2)'}} />
+        <div style={{position:'absolute', left:48, bottom:45}}><Sans size={18} color={MUTED} weight={800}>CREATOR → BUSINESS</Sans></div>
+      </div>
+      <Faceted x={-60} y={1350} size={170} rotate={-18} color={RED} opacity={.88}/>
+    </AbsoluteFill>}
+
+    {/* 0:21–0:25.5 Business asset */}
+    {f >= 630 && f < 765 && <AbsoluteFill style={{opacity: fade(f,630,765)}}>
+      <div style={{position:'absolute', left:72, top:260}}>
+        <Sans size={20} color={MUTED} weight={800} style={{letterSpacing:4}}>THE BUSINESS VALUE</Sans>
+        <div style={{marginTop:30}}><Serif size={103}>Followers ma aha</Serif></div>
+        <div style={{marginTop:10}}><Serif size={108} color={RED}>ujeeddada.</Serif></div>
+        <div style={{marginTop:38}}><Sans size={39} weight={800}>Audience = <span style={{color:BLUE}}>Business Asset</span></Sans></div>
+      </div>
+      <div style={{position:'absolute', right:70, bottom:300, width:360, height:260, background:INK, borderRadius:32, transform:`rotate(${interpolate(f,[630,700],[-5,0],ease)}deg)`, boxShadow:'0 28px 55px rgba(0,0,0,.22)'}}>
+        <div style={{position:'absolute', left:26, top:24}}><Sans size={16} color="#fff" weight={800} style={{letterSpacing:3}}>BUSINESS ASSET</Sans></div>
+        <div style={{position:'absolute', left:26, bottom:28}}><Serif size={53} color="#fff">Attention × Trust</Serif></div>
+      </div>
+      <Faceted x={780} y={80} size={150} rotate={20} color={BLUE} opacity={.88}/>
+    </AbsoluteFill>}
+
+    {/* 0:25.5–0:27 CTA */}
+    {f >= 765 && <AbsoluteFill style={{opacity: fade(f,765,duration,10,0)}}>
+      <div style={{position:'absolute', left:72, top:340}}>
+        <Sans size={20} color={MUTED} weight={800} style={{letterSpacing:4}}>CREATOR ECONOMY</Sans>
+        <div style={{marginTop:30}}><Serif size={101}>Audience</Serif></div>
+        <div style={{marginTop:8}}><Serif size={101} color={RED}>waa hanti.</Serif></div>
+        <div style={{marginTop:40, maxWidth:820}}><Sans size={24} color={MUTED} weight={500}>Haddii si sax ah loo isticmaalo, waxay noqon kartaa saldhig business oo dhab ah.</Sans></div>
+      </div>
+      <div style={{position:'absolute', left:72, right:72, bottom:80, display:'flex', justifyContent:'space-between'}}>
+        <Sans size={16} color={MUTED} weight={700}>#InfluencerMarketing #ContentCreator</Sans>
+        <Sans size={16} color={MUTED} weight={700}>#DigitalMarketing #Entrepreneur</Sans>
+      </div>
+      <div style={{position:'absolute', right:80, bottom:130, width:90, height:90, borderRadius:'50%', background:LIME, boxShadow:'0 14px 28px rgba(0,0,0,.12)'}} />
+    </AbsoluteFill>}
+
+    <div style={{position:'absolute', left:72, right:72, bottom:36, display:'flex', justifyContent:'space-between', opacity:.34}}>
+      <Sans size={13} color={INK} weight={700}>ATTENTION × TRUST</Sans>
+      <Sans size={13} color={INK} weight={700}>{String(Math.floor(f/fps)).padStart(2,'0')}s</Sans>
+    </div>
+  </AbsoluteFill>;
 };
