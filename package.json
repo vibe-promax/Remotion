@@ -5,12 +5,15 @@
   "scripts": {
     "studio": "remotion studio src/index.tsx",
     "render": "remotion render src/index.tsx Reel out/reel.mp4",
+    "render:3d": "remotion render src/index.tsx Creator3DReel out/creator-3d-reel.mp4",
     "build": "remotion bundle src/index.tsx"
   },
   "dependencies": {
     "@remotion/cli": "^4.0.0",
+    "@remotion/three": "^4.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "three": "^0.181.0",
     "remotion": "^4.0.0"
   },
   "devDependencies": {
