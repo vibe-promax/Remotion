@@ -17,10 +17,10 @@ jobs:
           node-version: 20
       - name: Install dependencies
         run: npm install
-      - name: Render Creator Audience editorial reel
-        run: npx remotion render src/index.tsx CreatorAudienceReel out/creator-audience-editorial.mp4 --codec=h264 --pixel-format=yuv420p
-      - name: Upload MP4
+      - name: Render Shot 04
+        run: npx remotion render src/index.tsx Shot04 out/shot-04.mp4 --codec=h264 --pixel-format=yuv420p
+      - name: Upload Shot 04 MP4
         uses: actions/upload-artifact@v4
         with:
-          name: creator-audience-editorial
-          path: out/creator-audience-editorial.mp4
+          name: shot-04-mp4
+          path: out/shot-04.mp4
