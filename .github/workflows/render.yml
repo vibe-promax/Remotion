@@ -17,10 +17,34 @@ jobs:
           node-version: 20
       - name: Install dependencies
         run: npm install
-      - name: Render Shot 04
-        run: npx remotion render src/index.tsx Shot04 out/shot-04.mp4 --codec=h264 --pixel-format=yuv420p
-      - name: Upload Shot 04 MP4
+      - name: Render first project - full motion graphics
+        run: npx remotion render src/index.tsx CreatorAudienceStyleDNA out/creator-audience-full.mp4 --codec=h264 --pixel-format=yuv420p
+      - name: Render clip 01
+        run: npx remotion render src/index.tsx CreatorAudienceStyleDNA out/clip-01-attention-trust.mp4 --codec=h264 --pixel-format=yuv420p --frames=0-149
+      - name: Render clip 02
+        run: npx remotion render src/index.tsx CreatorAudienceStyleDNA out/clip-02-creator-advantage.mp4 --codec=h264 --pixel-format=yuv420p --frames=150-299
+      - name: Render clip 03
+        run: npx remotion render src/index.tsx CreatorAudienceStyleDNA out/clip-03-business-asset.mp4 --codec=h264 --pixel-format=yuv420p --frames=300-449
+      - name: Package clips
+        run: |
+          mkdir -p package
+          cp out/creator-audience-full.mp4 package/
+          cp out/clip-01-attention-trust.mp4 package/
+          cp out/clip-02-creator-advantage.mp4 package/
+          cp out/clip-03-business-asset.mp4 package/
+          cd package
+          zip -r ../creator-audience-first-project.zip .
+      - name: Upload First Project ZIP
         uses: actions/upload-artifact@v4
         with:
-          name: shot-04-mp4
-          path: out/shot-04.mp4
+          name: creator-audience-first-project
+          path: creator-audience-first-project.zip
+      - name: Upload individual MP4 clips
+        uses: actions/upload-artifact@v4
+        with:
+          name: creator-audience-individual-mp4s
+          path: |
+            out/creator-audience-full.mp4
+            out/clip-01-attention-trust.mp4
+            out/clip-02-creator-advantage.mp4
+            out/clip-03-business-asset.mp4
