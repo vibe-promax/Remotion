@@ -34,3 +34,6 @@ npm run render
 6. Render the final MP4.
 
 The system must understand the script before choosing animation. It should never turn every sentence into the same animated caption.
+
+## 3D rebuild
+CreatorAudience3DRebuild uses Remotion Three / React Three Fiber and runs the visual QA gate before final rendering.
