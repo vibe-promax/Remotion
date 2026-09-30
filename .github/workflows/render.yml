@@ -6,7 +6,7 @@ on:
     branches: [main]
 
 jobs:
-  render:
+  qa:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -17,34 +17,67 @@ jobs:
           node-version: 20
       - name: Install dependencies
         run: npm install
-      - name: Render first project - full motion graphics
-        run: npx remotion render src/index.tsx CreatorAudienceStyleDNA out/creator-audience-full.mp4 --codec=h264 --pixel-format=yuv420p
-      - name: Render clip 01
-        run: npx remotion render src/index.tsx CreatorAudienceStyleDNA out/clip-01-attention-trust.mp4 --codec=h264 --pixel-format=yuv420p --frames=0-149
-      - name: Render clip 02
-        run: npx remotion render src/index.tsx CreatorAudienceStyleDNA out/clip-02-creator-advantage.mp4 --codec=h264 --pixel-format=yuv420p --frames=150-299
-      - name: Render clip 03
-        run: npx remotion render src/index.tsx CreatorAudienceStyleDNA out/clip-03-business-asset.mp4 --codec=h264 --pixel-format=yuv420p --frames=300-449
-      - name: Package clips
+      - name: Render QA frames at 1 fps
+        run: |
+          mkdir -p qa
+          for f in 0 30 60 90 120 150 180 210 240 270 300 330 360 390 420 450 480 510 540 570 600 630 660 690 720 750 780 810 840 870; do
+            npx remotion still src/index.tsx CreatorAudience3DRebuild qa/frame-${f}.png --frame=$f
+          done
+      - name: Build contact sheet
+        run: |
+          ffmpeg -y -pattern_type glob -i 'qa/frame-*.png' -vf "scale=270:-1,tile=5x6:padding=8:margin=8" qa/contact-sheet.jpg
+      - name: Upload QA contact sheet
+        uses: actions/upload-artifact@v4
+        with:
+          name: creator-audience-3d-contact-sheet
+          path: qa/contact-sheet.jpg
+
+  render:
+    needs: qa
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm install
+      - name: Render full 30 second film
+        run: npx remotion render src/index.tsx CreatorAudience3DRebuild out/creator-audience-full.mp4 --codec=h264 --pixel-format=yuv420p
+      - name: Render clip 01 — 10 seconds
+        run: npx remotion render src/index.tsx CreatorAudience3DRebuild out/clip-01.mp4 --codec=h264 --pixel-format=yuv420p --frames=0-299
+      - name: Render clip 02 — 10 seconds
+        run: npx remotion render src/index.tsx CreatorAudience3DRebuild out/clip-02.mp4 --codec=h264 --pixel-format=yuv420p --frames=300-599
+      - name: Render clip 03 — 10 seconds
+        run: npx remotion render src/index.tsx CreatorAudience3DRebuild out/clip-03.mp4 --codec=h264 --pixel-format=yuv420p --frames=600-899
+      - name: Verify durations
+        run: |
+          test "$(ffprobe -v error -show_entries format=duration -of csv=p=0 out/clip-01.mp4 | cut -d. -f1)" = "10"
+          test "$(ffprobe -v error -show_entries format=duration -of csv=p=0 out/clip-02.mp4 | cut -d. -f1)" = "10"
+          test "$(ffprobe -v error -show_entries format=duration -of csv=p=0 out/clip-03.mp4 | cut -d. -f1)" = "10"
+      - name: Package deliverables
         run: |
           mkdir -p package
           cp out/creator-audience-full.mp4 package/
-          cp out/clip-01-attention-trust.mp4 package/
-          cp out/clip-02-creator-advantage.mp4 package/
-          cp out/clip-03-business-asset.mp4 package/
+          cp out/clip-01.mp4 package/
+          cp out/clip-02.mp4 package/
+          cp out/clip-03.mp4 package/
+          cp clips_plan.md package/
           cd package
-          zip -r ../creator-audience-first-project.zip .
-      - name: Upload First Project ZIP
+          zip -r ../creator-audience-3d-rebuild.zip .
+      - name: Upload 3D rebuild ZIP
         uses: actions/upload-artifact@v4
         with:
-          name: creator-audience-first-project
-          path: creator-audience-first-project.zip
-      - name: Upload individual MP4 clips
+          name: creator-audience-3d-rebuild
+          path: creator-audience-3d-rebuild.zip
+      - name: Upload individual MP4s
         uses: actions/upload-artifact@v4
         with:
-          name: creator-audience-individual-mp4s
+          name: creator-audience-3d-mp4s
           path: |
             out/creator-audience-full.mp4
-            out/clip-01-attention-trust.mp4
-            out/clip-02-creator-advantage.mp4
-            out/clip-03-business-asset.mp4
+            out/clip-01.mp4
+            out/clip-02.mp4
+            out/clip-03.mp4
