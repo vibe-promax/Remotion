@@ -15,6 +15,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: Install FFmpeg for QA contact sheet
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
       - name: Install dependencies
         run: npm install
       - name: Render QA frames at 1 fps
@@ -42,6 +46,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: Install FFmpeg for duration verification
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
       - name: Install dependencies
         run: npm install
       - name: Render full 30 second film
