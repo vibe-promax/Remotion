@@ -19,6 +19,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y ffmpeg
+          ffmpeg -version
       - name: Install dependencies
         run: npm install
       - name: Render QA frames at 1 fps
@@ -50,6 +51,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y ffmpeg
+          ffmpeg -version
       - name: Install dependencies
         run: npm install
       - name: Render full 30 second film
